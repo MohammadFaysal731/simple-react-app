@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSignInWithGoogle } from "react-firebase-hooks/auth";
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebas.init';
 const SocialSignIn = () => {
   const [signInWithGoogle, googleUser, googleUserLoading, googleUserError] = useSignInWithGoogle(auth);
-  const navigate =useNavigate();
   let errorElement;
-  if(googleUser){
-    navigate("/dashboard")
-  }
+  const navigate =useNavigate();
+  const location=useLocation();
+  const from = location.state?.from?.pathname || "/"
+ useEffect(() => {
+   if (googleUser) {
+     navigate(from, { replace: true });
+   }
+ }, [googleUser, navigate, from]);
   if (googleUserLoading){
     return <h1>Loading ...</h1>
   }

@@ -1,21 +1,50 @@
-import React from 'react';
-import { Button, Form } from 'react-bootstrap';
-import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
-import SocialSignIn from './SocialSignIn';
+import React, { useEffect } from "react";
+import { Button, Form } from "react-bootstrap";
+import {
+  useCreateUserWithEmailAndPassword,
+  useUpdateProfile,
+} from "react-firebase-hooks/auth";
+import { useForm } from "react-hook-form";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { auth } from "../firebas.init";
+import SocialSignIn from "./SocialSignIn";
 
 const SingUP = () => {
-const {
-  register,
-  formState: { errors },
-  handleSubmit,
-} = useForm();
-const onSubmit = (data) =>{
-   const name = data.fullName;
-   const email = data.email;
-   const password = data.email;
-   console.log(name,email, password);
-};
+  const [
+    createUserWithEmailAndPassword,
+    emailUser,
+    emailUserLoading,
+    emailUserError,
+  ] = useCreateUserWithEmailAndPassword(auth);
+  const [updateProfile, updating, updatingError] = useUpdateProfile(auth);
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+  } = useForm();
+  let errorElement;
+  const navigate = useNavigate();
+  const location=useLocation();
+  const from = location.state?.from?.pathname || "/";
+  useEffect(()=>{
+    if (emailUser) {
+    navigate(from, { replace: true });
+  }
+  },[emailUser,navigate,from])
+  
+  if (emailUserLoading || updating) {
+    return <h1>Loading ...</h1>;
+  }
+  if (emailUserError || updatingError) {
+    errorElement = <h1 className="text-danger">{emailUserError?.message}</h1>;
+  }
+  const onSubmit = async (data) => {
+    const name = data.fullName;
+    const email = data.email;
+    const password = data.email;
+    await createUserWithEmailAndPassword(email, password);
+    await updateProfile({ displayName: name });
+  };
   return (
     <div className="mx-auto w-50 m-5">
       <Form onSubmit={handleSubmit(onSubmit)}>
@@ -88,13 +117,14 @@ const onSubmit = (data) =>{
           Sing Up
         </Button>
       </Form>
+      {errorElement}
       <p className="text-center">
         Already have account ?
         <span className="text-primary">
           <Link to="/sign-in">please sign in</Link>
         </span>
       </p>
-      <SocialSignIn/>
+      <SocialSignIn />
     </div>
   );
 };

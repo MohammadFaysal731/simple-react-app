@@ -1,19 +1,38 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Form } from "react-bootstrap";
+import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { auth } from "../firebas.init";
 import SocialSignIn from "./SocialSignIn";
 
 const SignIn = () => {
+  const [signInWithEmailAndPassword, emailUser, emailUserLoading, emailUserError] =
+    useSignInWithEmailAndPassword(auth);
   const {
     register,
     formState: { errors },
     handleSubmit,
   } = useForm();
+   let errorElement;
+   const navigate = useNavigate();
+   const location =useLocation();
+   const from = location.state?.from?.pathname || "/";
+   useEffect(() => {
+     if (emailUser) {
+       navigate(from, { replace: true });
+     }
+   }, [emailUser, navigate, from]);
+   if (emailUserLoading) {
+     return <h1>Loading ...</h1>;
+   }
+   if (emailUserError) {
+     errorElement = <h1 className="text-danger">{emailUserError?.message}</h1>;
+   }
   const onSubmit = (data) => {
     const email =data.email;
     const password =data.email;
-    console.log(email, password);
+    signInWithEmailAndPassword(email, password);
   };
   return (
     <div className="mx-auto w-50 m-5">
@@ -30,7 +49,7 @@ const SignIn = () => {
             })}
             autoComplete="off"
             type="email"
-            placeholder="Enter email"   
+            placeholder="Enter email"
           />
           <Form.Text className="text-muted">
             {errors?.email?.type === "required" && (
@@ -62,16 +81,17 @@ const SignIn = () => {
           </Form.Text>
         </Form.Group>
         <Button variant="dark" type="submit">
-          Sing Up
+          Sing In
         </Button>
       </Form>
+      {errorElement}
       <p className="text-center">
         New simple react app create an account ?
         <span className="text-primary">
           <Link to="/sing-up">please sing up</Link>
         </span>
       </p>
-      <SocialSignIn/>
+      <SocialSignIn />
     </div>
   );
 };
